@@ -18,8 +18,13 @@ package org.springframework.cloud.sample.bookstore.servicebroker.credhub;
 
 import org.springframework.credhub.support.ServiceInstanceCredentialName;
 import reactor.core.publisher.Mono;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 
 class CredHubPersistingWorkflow {
+
+	private static final Logger LOG = Loggers.getLogger(CredHubPersistingWorkflow.class);
+
 	private static final String CREDENTIALS_NAME = "credentials-json";
 	private final String appName;
 
@@ -28,6 +33,7 @@ class CredHubPersistingWorkflow {
 	}
 
 	Mono<ServiceInstanceCredentialName> buildCredentialName(String serviceDefinitionId, String bindingId) {
+		LOG.debug("Building credentials name for service_id '{}' and binding_id '{}'", serviceDefinitionId, bindingId);
 		return Mono.just(ServiceInstanceCredentialName.builder()
 			.serviceBrokerName(this.appName)
 			.serviceOfferingName(serviceDefinitionId)

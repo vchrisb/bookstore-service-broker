@@ -4,6 +4,7 @@ import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstan
 import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingResponse;
 import org.springframework.credhub.core.CredHubOperations;
 import org.springframework.credhub.support.CredentialName;
+import org.springframework.credhub.support.ServiceInstanceCredentialName;
 import reactor.core.publisher.Mono;
 import reactor.util.Logger;
 import reactor.util.Loggers;
@@ -19,24 +20,25 @@ public class CredhubDeleteServiceInstanceBinding extends CredHubPersistingWorkfl
 		this.credHubOperations = credHubOperations;
 	}
 
-	public Mono<DeleteServiceInstanceBindingResponse.DeleteServiceInstanceBindingResponseBuilder> buildResponse(DeleteServiceInstanceBindingRequest
-																													request,
-																												DeleteServiceInstanceBindingResponse.DeleteServiceInstanceBindingResponseBuilder responseBuilder) {
-		return buildCredentialName(request.getServiceDefinitionId(), request.getBindingId())
+	public Mono<DeleteServiceInstanceBindingResponse.DeleteServiceInstanceBindingResponseBuilder> buildResponse(DeleteServiceInstanceBindingRequest request, DeleteServiceInstanceBindingResponse.DeleteServiceInstanceBindingResponseBuilder responseBuilder) {
+		LOG.debug("Preparing delete of credentials for service_id '{}' and binding_id '{}'", request.getServiceDefinitionId(), request.getBindingId());
+
+		Mono<ServiceInstanceCredentialName> credentialNameMono = buildCredentialName(request.getServiceDefinitionId(), request.getBindingId());
+		return credentialNameMono
 			.filter(this::credentialExists)
-			.flatMap(credentialName -> deleteBindingCredentials(credentialName)
-				.doOnRequest(l -> LOG.debug("Deleting binding credentials with name '{}' in CredHub", credentialName.getName()))
-				.doOnSuccess(r -> LOG.debug("Finished deleting binding credentials with name '{}' in CredHub", credentialName.getName()))
-				.doOnError(exception -> LOG.error("Error deleting binding credentials with name '{}' in CredHub with error: {}",
-					credentialName.getName(), exception.getMessage())))
+			.map(this::deleteBindingCredentials)
 			.thenReturn(responseBuilder);
 	}
 
 	private boolean credentialExists(CredentialName credentialName) {
+		if (credentialName == null) {
+			return false;
+		}
 		return !credHubOperations.credentials().findByName(credentialName).isEmpty();
 	}
 
 	private Mono<Void> deleteBindingCredentials(CredentialName credentialName) {
+		LOG.debug("Deleting credentials with name '{}'", credentialName.getName());
 		return Mono.fromCallable(() -> {
 			credHubOperations.credentials().deleteByName(credentialName);
 			return null;
