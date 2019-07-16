@@ -16,6 +16,7 @@
 
 package org.springframework.cloud.sample.bookstore.servicebroker.service;
 
+import org.springframework.cloud.sample.bookstore.servicebroker.credhub.CredhubCreateServiceInstanceBinding;
 import org.springframework.cloud.sample.bookstore.web.model.ApplicationInformation;
 import org.springframework.cloud.sample.bookstore.servicebroker.model.ServiceBinding;
 import org.springframework.cloud.sample.bookstore.servicebroker.repository.ServiceBindingRepository;
@@ -46,12 +47,15 @@ public class BookStoreServiceInstanceBindingService implements ServiceInstanceBi
 	private final UserService userService;
 	private final ApplicationInformation applicationInformation;
 
+	private final Optional<CredhubCreateServiceInstanceBinding> credhubCreateServiceInstanceBinding;
+
 	public BookStoreServiceInstanceBindingService(ServiceBindingRepository bindingRepository,
 												  UserService userService,
-												  ApplicationInformation applicationInformation) {
+												  ApplicationInformation applicationInformation, Optional<CredhubCreateServiceInstanceBinding> credhubCreateServiceInstanceBinding) {
 		this.bindingRepository = bindingRepository;
 		this.userService = userService;
 		this.applicationInformation = applicationInformation;
+		this.credhubCreateServiceInstanceBinding = credhubCreateServiceInstanceBinding;
 	}
 
 	@Override
@@ -65,18 +69,28 @@ public class BookStoreServiceInstanceBindingService implements ServiceInstanceBi
 			responseBuilder
 					.bindingExisted(true)
 					.credentials(binding.get().getCredentials());
+			return Mono.just(responseBuilder.build());
 		} else {
 			User user = createUser(request);
 
 			Map<String, Object> credentials = buildCredentials(request.getServiceInstanceId(), user);
-			saveBinding(request, credentials);
-
 			responseBuilder
-					.bindingExisted(false)
-					.credentials(credentials);
+				.bindingExisted(false)
+				.credentials(credentials);
+			if (credhubCreateServiceInstanceBinding.isPresent()){
+				return this.credhubCreateServiceInstanceBinding.get().buildResponse(request, responseBuilder).map(builder ->
+				{
+					CreateServiceInstanceAppBindingResponse build = builder.build();
+					saveBinding(request, build.getCredentials());
+					return build;
+				});
+			} else {
+				saveBinding(request, credentials);
+				return Mono.just(responseBuilder.build());
+			}
+
 		}
 
-		return Mono.just(responseBuilder.build());
 	}
 
 	@Override
