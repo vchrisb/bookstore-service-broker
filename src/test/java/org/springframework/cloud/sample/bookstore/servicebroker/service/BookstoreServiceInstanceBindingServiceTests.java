@@ -73,7 +73,7 @@ public class BookstoreServiceInstanceBindingServiceTests {
 
 		ApplicationInformation appInfo = new ApplicationInformation(BASE_URL);
 
-		service = new BookStoreServiceInstanceBindingService(repository, userService, appInfo, Optional.empty() );
+		service = new BookStoreServiceInstanceBindingService(repository, userService, appInfo, Optional.empty(), Optional.empty() );
 	}
 
 	@Test

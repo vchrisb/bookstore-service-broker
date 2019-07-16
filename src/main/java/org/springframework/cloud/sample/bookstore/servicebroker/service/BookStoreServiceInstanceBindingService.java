@@ -17,6 +17,7 @@
 package org.springframework.cloud.sample.bookstore.servicebroker.service;
 
 import org.springframework.cloud.sample.bookstore.servicebroker.credhub.CredhubCreateServiceInstanceBinding;
+import org.springframework.cloud.sample.bookstore.servicebroker.credhub.CredhubDeleteServiceInstanceBinding;
 import org.springframework.cloud.sample.bookstore.web.model.ApplicationInformation;
 import org.springframework.cloud.sample.bookstore.servicebroker.model.ServiceBinding;
 import org.springframework.cloud.sample.bookstore.servicebroker.repository.ServiceBindingRepository;
@@ -48,14 +49,16 @@ public class BookStoreServiceInstanceBindingService implements ServiceInstanceBi
 	private final ApplicationInformation applicationInformation;
 
 	private final Optional<CredhubCreateServiceInstanceBinding> credhubCreateServiceInstanceBinding;
+	private final Optional<CredhubDeleteServiceInstanceBinding> credhubDeleteServiceInstanceBinding;
 
 	public BookStoreServiceInstanceBindingService(ServiceBindingRepository bindingRepository,
 												  UserService userService,
-												  ApplicationInformation applicationInformation, Optional<CredhubCreateServiceInstanceBinding> credhubCreateServiceInstanceBinding) {
+												  ApplicationInformation applicationInformation, Optional<CredhubCreateServiceInstanceBinding> credhubCreateServiceInstanceBinding, Optional<CredhubDeleteServiceInstanceBinding> credhubDeleteServiceInstanceBinding) {
 		this.bindingRepository = bindingRepository;
 		this.userService = userService;
 		this.applicationInformation = applicationInformation;
 		this.credhubCreateServiceInstanceBinding = credhubCreateServiceInstanceBinding;
+		this.credhubDeleteServiceInstanceBinding = credhubDeleteServiceInstanceBinding;
 	}
 
 	@Override
@@ -116,6 +119,9 @@ public class BookStoreServiceInstanceBindingService implements ServiceInstanceBi
 		if (bindingRepository.existsById(bindingId)) {
 			bindingRepository.deleteById(bindingId);
 			userService.deleteUser(bindingId);
+			if (credhubDeleteServiceInstanceBinding.isPresent()){
+				credhubDeleteServiceInstanceBinding.get().buildResponse(request, DeleteServiceInstanceBindingResponse.builder());
+			}
 		} else {
 			throw new ServiceInstanceBindingDoesNotExistException(bindingId);
 		}
