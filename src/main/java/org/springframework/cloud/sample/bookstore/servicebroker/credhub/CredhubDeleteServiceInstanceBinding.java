@@ -19,10 +19,10 @@ public class CredhubDeleteServiceInstanceBinding extends CredHubPersistingWorkfl
 		this.credHubOperations = credHubOperations;
 	}
 
-	public Mono<DeleteServiceInstanceBindingResponse.DeleteServiceInstanceBindingResponseBuilder> buildResponse(DeleteServiceInstanceBindingRequest
-																													request,
-																												DeleteServiceInstanceBindingResponse.DeleteServiceInstanceBindingResponseBuilder responseBuilder) {
+	public Mono<DeleteServiceInstanceBindingResponse.DeleteServiceInstanceBindingResponseBuilder> buildResponse(DeleteServiceInstanceBindingRequest request, DeleteServiceInstanceBindingResponse.DeleteServiceInstanceBindingResponseBuilder responseBuilder) {
+		LOG.debug("Preparing delete of credentials for service_id '{}' and binding_id '{}'", request.getServiceDefinitionId(), request.getBindingId());
 		return buildCredentialName(request.getServiceDefinitionId(), request.getBindingId())
+			.doOnError(exception -> LOG.error("Could not create the credential name", exception))
 			.filter(this::credentialExists)
 			.flatMap(credentialName -> deleteBindingCredentials(credentialName)
 				.doOnRequest(l -> LOG.debug("Deleting binding credentials with name '{}' in CredHub", credentialName.getName()))
@@ -33,6 +33,7 @@ public class CredhubDeleteServiceInstanceBinding extends CredHubPersistingWorkfl
 	}
 
 	private boolean credentialExists(CredentialName credentialName) {
+		LOG.debug("Checking whether credentials with name '{}' exists in CredHub", credentialName.getName());
 		return !credHubOperations.credentials().findByName(credentialName).isEmpty();
 	}
 
