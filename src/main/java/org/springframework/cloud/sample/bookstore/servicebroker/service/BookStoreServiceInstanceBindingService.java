@@ -26,6 +26,7 @@ import org.springframework.cloud.sample.bookstore.web.service.UserService;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceBindingDoesNotExistException;
 import org.springframework.cloud.servicebroker.model.binding.*;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceAppBindingResponse.CreateServiceInstanceAppBindingResponseBuilder;
+import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingResponse.DeleteServiceInstanceBindingResponseBuilder;
 import org.springframework.cloud.servicebroker.service.ServiceInstanceBindingService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -113,16 +114,18 @@ public class BookStoreServiceInstanceBindingService implements ServiceInstanceBi
 	@Override
 	public Mono<DeleteServiceInstanceBindingResponse> deleteServiceInstanceBinding(DeleteServiceInstanceBindingRequest request) {
 		String bindingId = request.getBindingId();
-		DeleteServiceInstanceBindingResponse.DeleteServiceInstanceBindingResponseBuilder builder = DeleteServiceInstanceBindingResponse.builder();
+		DeleteServiceInstanceBindingResponseBuilder builder = DeleteServiceInstanceBindingResponse.builder();
 
 		if (bindingRepository.existsById(bindingId)) {
 			bindingRepository.deleteById(bindingId);
 			userService.deleteUser(bindingId);
-			this.credhubDelete.ifPresent(credhub -> credhub.buildResponse(request, builder));
+			return this.credhubDelete
+				.map(credhub -> credhub.buildResponse(request, builder))
+				.get()
+				.map(DeleteServiceInstanceBindingResponseBuilder::build);
 		} else {
 			throw new ServiceInstanceBindingDoesNotExistException(bindingId);
 		}
-		return Mono.just(builder.build());
 	}
 
 	private User createUser(CreateServiceInstanceBindingRequest request) {
