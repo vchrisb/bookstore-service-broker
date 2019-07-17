@@ -60,7 +60,8 @@ routes:            bookstore-service-broker.apps.example.com
 
 == Deploy the service broker application with Credhub
 
-The service broker does support storing credentials in Credhub optionally. The broker needs UAA client_credentials, which are authorized to `/c/bookstore-service-broker/bdb1be2e-360b-495c-8115-d7697f9c6a9e/*`, to access and store credentials in credhub.
+The service broker does support storing credentials in Credhub optionally. The broker needs UAA client_credentials, which are authorized to `/c/bookstore-service-broker/bdb1be2e-360b-495c-8115-d7697f9c6a9e/*` in Credhub, to access and store credentials securely.
+More information can be found here: https://github.com/cloudfoundry-incubator/credhub/blob/master/docs/secure-service-credentials.md
 
 === Create client credentials in UAA
 
