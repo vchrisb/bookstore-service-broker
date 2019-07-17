@@ -119,8 +119,7 @@ public class BookStoreServiceInstanceBindingService implements ServiceInstanceBi
 		if (bindingRepository.existsById(bindingId)) {
 			bindingRepository.deleteById(bindingId);
 			userService.deleteUser(bindingId);
-			return this.credhubDelete
-				.map(credhub -> credhub.buildResponse(request, builder))
+			return this.credhubDelete.map(credhub -> credhub.buildResponse(request, builder))
 				.orElseGet(() -> Mono.just(DeleteServiceInstanceBindingResponse.builder()))
 				.map(DeleteServiceInstanceBindingResponseBuilder::build);
 		} else {
