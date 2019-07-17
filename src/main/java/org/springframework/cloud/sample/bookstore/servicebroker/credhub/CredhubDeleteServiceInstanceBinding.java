@@ -39,10 +39,8 @@ public class CredhubDeleteServiceInstanceBinding extends CredHubPersistingWorkfl
 
 	private Mono<Void> deleteBindingCredentials(CredentialName credentialName) {
 		LOG.debug("Deleting credentials with name '{}'", credentialName.getName());
-		return Mono.fromCallable(() -> {
-			credHubOperations.credentials().deleteByName(credentialName);
-			return null;
-		});
+		credHubOperations.credentials().deleteByName(credentialName);
+		return Mono.never();
 	}
 
 }
